@@ -1,6 +1,11 @@
 #include <open62541/plugin/log_stdout.h>
 #include <open62541/server.h>
 #include <open62541/server_config_default.h>
+#include <open62541/server_config.h>
+#include <open62541/plugin/historydata/history_data_gathering.h>
+#include <open62541/plugin/historydata/history_data_backend_memory.h>
+#include <open62541/plugin/historydata/history_data_gathering_default.h>
+#include <open62541/plugin/historydata/history_database_default.h>
 
 #include <signal.h>
 #include <stdlib.h>
@@ -46,13 +51,19 @@ static void stopHandler(int sig) {
 int main(void) {
     signal(SIGINT, stopHandler);
     signal(SIGTERM, stopHandler);
-
+    
     UA_Server *server = UA_Server_new();
-    UA_ServerConfig_setDefault(UA_Server_getConfig(server));
+    UA_ServerConfig *config = UA_Server_getConfig(server);
+    UA_ServerConfig_setDefault(config);
+    UA_HistoryDataGathering gathering = UA_HistoryDataGathering_Default(1);
+    
+    config->historyDatabase = UA_HistoryDatabase_default(gathering);
 
-    addTankObject(server, &tankSize, &tankValue);
-    addValveObject(server, "Valve In", &valveInFlow, &valveInValue);
-    addValveObject(server, "Valve Out", &valveOutFlow, &valveOutValue);
+    //gathering.registerNodeId(server, NULL, nodeId, settings);
+
+    addTankObject(server, &gathering, &tankSize, &tankValue);
+    addValveObject(server, &gathering, "Valve In", &valveInFlow, &valveInValue);
+    addValveObject(server, &gathering, "Valve Out", &valveOutFlow, &valveOutValue);
 
     UA_Server_addRepeatedCallback(server, updateStep, NULL, step, NULL);
 

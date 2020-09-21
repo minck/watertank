@@ -2,7 +2,8 @@
 #define VALVE_H_
 
 typedef struct UA_Server UA_Server;
+typedef struct UA_HistoryDataGathering UA_HistoryDataGathering;
 
-void addValveObject(UA_Server *server, char *name, float *flow, float *value);
+void addValveObject(UA_Server *server, UA_HistoryDataGathering *gathering, char *name, float *flow, float *value);
 
 #endif

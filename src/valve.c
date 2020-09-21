@@ -1,6 +1,8 @@
 #include "valve.h"
 #include "util.h"
 #include <open62541/server.h>
+#include <open62541/plugin/historydata/history_data_gathering.h>
+#include <open62541/plugin/historydata/history_data_backend_memory.h>
 
 static void addFlow(UA_Server *server, UA_NodeId parentId, float *value) {
     UA_VariableAttributes attr = UA_VariableAttributes_default;
@@ -22,10 +24,11 @@ static void addFlow(UA_Server *server, UA_NodeId parentId, float *value) {
                                         timeDataSource, value, &nodeId);
 }
 
-static void addValue(UA_Server *server, UA_NodeId parentId, float *value) {
+static void addValue(UA_Server *server, UA_HistoryDataGathering *gathering, UA_NodeId parentId, float *value) {
     UA_VariableAttributes attr = UA_VariableAttributes_default;
     attr.displayName = UA_LOCALIZEDTEXT("en-US", "Value");
-    attr.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
+    attr.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE | UA_ACCESSLEVELMASK_HISTORYREAD;
+    attr.historizing = true;
 
     UA_NodeId nodeId;
     UA_QualifiedName currentName = UA_QUALIFIEDNAME(1, "valve-value");
@@ -39,6 +42,13 @@ static void addValue(UA_Server *server, UA_NodeId parentId, float *value) {
                                         UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE), 
                                         attr,
                                         timeDataSource, value, &nodeId);
+
+    UA_HistorizingNodeIdSettings setting;
+    setting.historizingBackend = UA_HistoryDataBackend_Memory(3, 100);
+    setting.maxHistoryDataResponseSize = 100;
+    setting.pollingInterval = 1000;
+    setting.historizingUpdateStrategy = UA_HISTORIZINGUPDATESTRATEGY_POLL;
+    gathering->registerNodeId(server, gathering->context, &nodeId, setting);
 }
 
 static UA_StatusCode openMethodCallback(UA_Server *server,
@@ -91,7 +101,7 @@ static void addCloseMethod(UA_Server *server, UA_NodeId parentId, float *value) 
                             0, NULL, 0, NULL, value, &methodId);
 }
 
-void addValveObject(UA_Server *server, char *name, float *flow, float *value) {
+void addValveObject(UA_Server *server, UA_HistoryDataGathering *gathering, char *name, float *flow, float *value) {
     UA_NodeId valveId;
     UA_ObjectAttributes oAttr = UA_ObjectAttributes_default;
     oAttr.displayName = UA_LOCALIZEDTEXT("en-US", name);
@@ -102,7 +112,7 @@ void addValveObject(UA_Server *server, char *name, float *flow, float *value) {
                             oAttr, NULL, &valveId);
 
     addFlow(server, valveId, flow);
-    addValue(server, valveId, value);
+    addValue(server, gathering, valveId, value);
     addOpenMethod(server, valveId, value);
     addCloseMethod(server, valveId, value);
 }

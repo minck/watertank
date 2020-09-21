@@ -1,4 +1,6 @@
 #include <open62541/server.h>
+#include <open62541/plugin/historydata/history_data_gathering.h>
+#include <open62541/plugin/historydata/history_data_backend_memory.h>
 #include "util.h"
 
 static UA_NodeId addSize(UA_Server *server, UA_NodeId parentId, float *size) {
@@ -23,10 +25,11 @@ static UA_NodeId addSize(UA_Server *server, UA_NodeId parentId, float *size) {
     return nodeId;
 }
 
-static UA_NodeId addValue(UA_Server *server, UA_NodeId parentId, float *value) {
+static UA_NodeId addValue(UA_Server *server, UA_HistoryDataGathering *gathering, UA_NodeId parentId, float *value) {
     UA_VariableAttributes attr = UA_VariableAttributes_default;
     attr.displayName = UA_LOCALIZEDTEXT("en-US", "Value");
-    attr.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
+    attr.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE | UA_ACCESSLEVELMASK_HISTORYREAD;
+    attr.historizing = true;
 
     UA_NodeId nodeId;
     UA_QualifiedName currentName = UA_QUALIFIEDNAME(1, "tank-value");
@@ -42,10 +45,17 @@ static UA_NodeId addValue(UA_Server *server, UA_NodeId parentId, float *value) {
                                         attr,
                                         timeDataSource, value, NULL);
 
+    UA_HistorizingNodeIdSettings setting;
+    setting.historizingBackend = UA_HistoryDataBackend_Memory(3, 100);
+    setting.maxHistoryDataResponseSize = 100;
+    setting.pollingInterval = 1000;
+    setting.historizingUpdateStrategy = UA_HISTORIZINGUPDATESTRATEGY_POLL;
+    gathering->registerNodeId(server, gathering->context, &nodeId, setting);
+
     return nodeId;
 }
 
-void addTankObject(UA_Server *server, float *size, float *value) {
+void addTankObject(UA_Server *server, UA_HistoryDataGathering *gathering, float *size, float *value) {
     UA_NodeId tankId;
     UA_ObjectAttributes oAttr = UA_ObjectAttributes_default;
     oAttr.displayName = UA_LOCALIZEDTEXT("en-US", "Tank");
@@ -56,5 +66,5 @@ void addTankObject(UA_Server *server, float *size, float *value) {
                             oAttr, NULL, &tankId);
 
     addSize(server, tankId, size);
-    addValue(server, tankId, value);
+    addValue(server, gathering, tankId, value);
 }

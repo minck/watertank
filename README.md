@@ -13,6 +13,8 @@ make
 
 Connect with UaExpert to http://localhost:4840, to see the simulation.
 
+![UAExpert tree](/uaexpert.png)
+
 Simulation:
 * Simulation has two valves and a water tank. 
 * Tank size and water level can be viewed.

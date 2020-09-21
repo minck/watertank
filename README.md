@@ -19,5 +19,5 @@ Simulation:
 * Simulation has two valves and a water tank. 
 * Tank size and water level can be viewed.
 * Opening Valve In flows water in the tank.
-* Opening Valve Out flows water out of the tank.
+* Valve Out value changes randomly (using perlin noise) to simulate water going to the process.
 * Calling methods Open and Close in Valves allows opening and closing them or change value to open a given amount.

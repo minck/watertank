@@ -7,6 +7,7 @@
 
 #include "tank.h"
 #include "valve.h"
+#include "perlin/perlin.h"
 
 float tankSize = 2.0f;
 float tankValue = 0.0f;
@@ -17,9 +18,15 @@ float valveInValue = 0.0f;
 float valveOutFlow = 0.08f;
 float valveOutValue = 0.0f;
 
+int step = 100; // in milliseconds
+float t = 0.0f;
+
 void updateStep(UA_Server *server, void *data)
 {
-    float s = 100.0f/1000.0f;
+    float s = step/1000.0f;
+    t += s;
+
+    valveOutValue = (pnoise1d(t / 10.0f, 1.0/4.0, 4, 567890) + 1) / 2.0f;
 
     tankValue += valveInFlow * valveInValue * s;
     tankValue -= valveOutFlow * valveOutValue * s;
@@ -47,7 +54,7 @@ int main(void) {
     addValveObject(server, "Valve In", &valveInFlow, &valveInValue);
     addValveObject(server, "Valve Out", &valveOutFlow, &valveOutValue);
 
-    UA_Server_addRepeatedCallback(server, updateStep, NULL, 100, NULL);
+    UA_Server_addRepeatedCallback(server, updateStep, NULL, step, NULL);
 
     UA_StatusCode retval = UA_Server_run(server, &running);
 

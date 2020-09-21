@@ -1,0 +1,3 @@
+[submodule "src/perlin"]
+	path = src/perlin
+	url = https://github.com/czinn/perlin.git

@@ -26,12 +26,15 @@ float valveOutValue = 0.0f;
 int step = 100; // in milliseconds
 float t = 0.0f;
 
+UA_HistoryDataBackend backend;
+
 void updateStep(UA_Server *server, void *data)
 {
     float s = step/1000.0f;
     t += s;
 
-    valveOutValue = (pnoise1d(t / 10.0f, 1.0/4.0, 4, 567890) + 1) / 2.0f;
+    valveOutValue = (pnoise1d(t / 2.0f, 1.0/2.0, 4, 567890) + 1) / 2.0f;
+    valveOutValue = valveOutValue < 0.0f ? 0.0f : (valveOutValue > 1.0f ? 1.0f : valveOutValue);
 
     tankValue += valveInFlow * valveInValue * s;
     tankValue -= valveOutFlow * valveOutValue * s;
@@ -57,9 +60,9 @@ int main(void) {
     UA_ServerConfig_setDefault(config);
     UA_HistoryDataGathering gathering = UA_HistoryDataGathering_Default(1);
     
-    config->historyDatabase = UA_HistoryDatabase_default(gathering);
+    backend = UA_HistoryDataBackend_Memory(10, 1000);
 
-    //gathering.registerNodeId(server, NULL, nodeId, settings);
+    config->historyDatabase = UA_HistoryDatabase_default(gathering);
 
     addTankObject(server, &gathering, &tankSize, &tankValue);
     addValveObject(server, &gathering, "Valve In", &valveInFlow, &valveInValue);

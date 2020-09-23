@@ -4,6 +4,8 @@
 #include <open62541/plugin/historydata/history_data_gathering.h>
 #include <open62541/plugin/historydata/history_data_backend_memory.h>
 
+extern UA_HistoryDataBackend backend;
+
 static void addFlow(UA_Server *server, UA_NodeId parentId, float *value) {
     UA_VariableAttributes attr = UA_VariableAttributes_default;
     attr.displayName = UA_LOCALIZEDTEXT("en-US", "Flow");
@@ -44,11 +46,13 @@ static void addValue(UA_Server *server, UA_HistoryDataGathering *gathering, UA_N
                                         timeDataSource, value, &nodeId);
 
     UA_HistorizingNodeIdSettings setting;
-    setting.historizingBackend = UA_HistoryDataBackend_Memory(3, 100);
+    //setting.historizingBackend = UA_HistoryDataBackend_Memory(1, 128);
+    setting.historizingBackend = backend;
     setting.maxHistoryDataResponseSize = 100;
-    setting.pollingInterval = 1000;
+    setting.pollingInterval = 100;
     setting.historizingUpdateStrategy = UA_HISTORIZINGUPDATESTRATEGY_POLL;
     gathering->registerNodeId(server, gathering->context, &nodeId, setting);
+    gathering->startPoll(server, gathering->context, &nodeId);
 }
 
 static UA_StatusCode openMethodCallback(UA_Server *server,

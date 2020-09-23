@@ -3,6 +3,8 @@
 #include <open62541/plugin/historydata/history_data_backend_memory.h>
 #include "util.h"
 
+extern UA_HistoryDataBackend backend;
+
 static UA_NodeId addSize(UA_Server *server, UA_NodeId parentId, float *size) {
     UA_VariableAttributes attr = UA_VariableAttributes_default;
     attr.displayName = UA_LOCALIZEDTEXT("en-US", "Size");
@@ -43,14 +45,16 @@ static UA_NodeId addValue(UA_Server *server, UA_HistoryDataGathering *gathering,
                                         currentName,
                                         UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE), 
                                         attr,
-                                        timeDataSource, value, NULL);
+                                        timeDataSource, value, &nodeId);
 
     UA_HistorizingNodeIdSettings setting;
-    setting.historizingBackend = UA_HistoryDataBackend_Memory(3, 100);
+    //setting.historizingBackend = UA_HistoryDataBackend_Memory(1, 128);
+    setting.historizingBackend = backend;
     setting.maxHistoryDataResponseSize = 100;
-    setting.pollingInterval = 1000;
+    setting.pollingInterval = 100;
     setting.historizingUpdateStrategy = UA_HISTORIZINGUPDATESTRATEGY_POLL;
     gathering->registerNodeId(server, gathering->context, &nodeId, setting);
+    gathering->startPoll(server, gathering->context, &nodeId);
 
     return nodeId;
 }

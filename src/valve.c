@@ -48,7 +48,7 @@ static void addValue(UA_Server *server, UA_HistoryDataGathering *gathering, UA_N
     UA_HistorizingNodeIdSettings setting;
     //setting.historizingBackend = UA_HistoryDataBackend_Memory(1, 128);
     setting.historizingBackend = backend;
-    setting.maxHistoryDataResponseSize = 100;
+    setting.maxHistoryDataResponseSize = 1000;
     setting.pollingInterval = 100;
     setting.historizingUpdateStrategy = UA_HISTORIZINGUPDATESTRATEGY_POLL;
     gathering->registerNodeId(server, gathering->context, &nodeId, setting);

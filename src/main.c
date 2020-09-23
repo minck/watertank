@@ -60,7 +60,7 @@ int main(void) {
     UA_ServerConfig_setDefault(config);
     UA_HistoryDataGathering gathering = UA_HistoryDataGathering_Default(1);
     
-    backend = UA_HistoryDataBackend_Memory(10, 1000);
+    backend = UA_HistoryDataBackend_Memory(10, 1100);
 
     config->historyDatabase = UA_HistoryDatabase_default(gathering);
 
